@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Klondike Solitaire</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="game-container">
+        <header>
+            <h1>Solitaire</h1>
+            <div class="controls">
+                <button id="new-game-btn">New Game</button>
+                <div class="score-box">Moves: <span id="move-count">0</span></div>
+            </div>
+        </header>
+
+        <div id="board">
+            <div id="top-row">
+                <div id="stock-container">
+                    <div id="stock" class="pile stock-pile"></div>
+                    <div id="waste" class="pile waste-pile"></div>
+                </div>
+                <!-- Spacer for aesthetic alignment -->
+                <div class="spacer"></div>
+                <div id="foundations-container">
+                    <div id="foundation-0" class="pile foundation-pile" data-suit="hearts"></div>
+                    <div id="foundation-1" class="pile foundation-pile" data-suit="diamonds"></div>
+                    <div id="foundation-2" class="pile foundation-pile" data-suit="clubs"></div>
+                    <div id="foundation-3" class="pile foundation-pile" data-suit="spades"></div>
+                </div>
+            </div>
+
+            <div id="tableau-container">
+                <div id="tableau-0" class="tableau-pile"></div>
+                <div id="tableau-1" class="tableau-pile"></div>
+                <div id="tableau-2" class="tableau-pile"></div>
+                <div id="tableau-3" class="tableau-pile"></div>
+                <div id="tableau-4" class="tableau-pile"></div>
+                <div id="tableau-5" class="tableau-pile"></div>
+                <div id="tableau-6" class="tableau-pile"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>

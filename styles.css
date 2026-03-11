@@ -1,0 +1,253 @@
+:root {
+    --bg-color-top: #0a4f2b; /* Deep felt green */
+    --bg-color-bottom: #05331b;
+    --card-width: 90px;
+    --card-height: 130px;
+    --card-border-radius: 6px;
+    --card-bg: #ffffff;
+    --card-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    --slot-bg: rgba(255, 255, 255, 0.1);
+    --slot-border: rgba(255, 255, 255, 0.3);
+    --text-primary: #ffffff;
+    --red-suit: #e63946;
+    --black-suit: #1d3557;
+    --accent: #f4a261;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, var(--bg-color-top), var(--bg-color-bottom));
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    overflow-x: hidden;
+}
+
+#game-container {
+    width: 100%;
+    max-width: 1000px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+/* Header */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 20px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    letter-spacing: 1px;
+}
+
+.controls {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+#new-game-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+}
+
+#new-game-btn:hover {
+    background: #e76f51;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+}
+
+.score-box {
+    font-size: 1.1rem;
+    font-weight: 600;
+    background: rgba(0,0,0,0.3);
+    padding: 8px 16px;
+    border-radius: 8px;
+}
+
+/* Board Layout */
+#board {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+}
+
+#top-row {
+    display: flex;
+    justify-content: space-between;
+    height: var(--card-height);
+}
+
+#stock-container {
+    display: flex;
+    gap: 20px;
+}
+
+.spacer {
+    flex-grow: 1;
+}
+
+#foundations-container {
+    display: flex;
+    gap: 20px;
+}
+
+#tableau-container {
+    display: flex;
+    justify-content: space-between;
+    min-height: 500px; /* Space for cascading cards */
+}
+
+/* Piles */
+.pile {
+    width: var(--card-width);
+    height: var(--card-height);
+    background: var(--slot-bg);
+    border: 2px dashed var(--slot-border);
+    border-radius: var(--card-border-radius);
+    position: relative;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+}
+
+.tableau-pile {
+    width: var(--card-width);
+    min-height: var(--card-height); /* Expand as cards pile up */
+    background: var(--slot-bg);
+    border: 2px dashed var(--slot-border);
+    border-radius: var(--card-border-radius);
+    position: relative;
+}
+
+/* Playing Cards */
+.card {
+    width: var(--card-width);
+    height: var(--card-height);
+    background-color: var(--card-bg);
+    border-radius: var(--card-border-radius);
+    box-shadow: var(--card-shadow);
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 8px;
+    cursor: grab;
+    user-select: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+    /* Font styles for cards */
+    font-family: 'Inter', sans-serif;
+}
+
+.card:active {
+    cursor: grabbing;
+}
+
+.card.face-down {
+    background: linear-gradient(135deg, #1d3557, #457b9d);
+    background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 20px);
+    border: 2px solid #fff;
+    cursor: default;
+}
+
+.card.face-down * {
+    display: none; /* Hide contents */
+}
+
+.card .top-left {
+    align-self: flex-start;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+}
+
+.card .rank {
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.card .suit-small {
+    font-size: 1rem;
+}
+
+.card .center-suit {
+    font-size: 3rem;
+    align-self: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1;
+}
+
+.card .bottom-right {
+    align-self: flex-end;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+    transform: rotate(180deg);
+}
+
+.card.red {
+    color: var(--red-suit);
+}
+
+.card.black {
+    color: var(--black-suit);
+}
+
+/* Card Stacking Offsets */
+.tableau-pile .card {
+    top: 0;
+    left: 0;
+}
+
+/* Add empty state icon for foundations */
+.foundation-pile {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 3rem;
+    color: rgba(255,255,255,0.2);
+}
+
+#foundation-0::before { content: '♥'; }
+#foundation-1::before { content: '♦'; }
+#foundation-2::before { content: '♣'; }
+#foundation-3::before { content: '♠'; }
+
+/* Dragging state */
+.card.dragging {
+    opacity: 0.9;
+    z-index: 1000 !important;
+    transform: scale(1.05);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+    pointer-events: none; /* Crucial for drag events to bubble to underneath elements */
+}
+
+.pile.drag-over, .tableau-pile.drag-over {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: #fff;
+}
