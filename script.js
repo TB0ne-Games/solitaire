@@ -199,7 +199,7 @@ function renderTableau() {
             colEl.appendChild(el);
             
             // Adjust cascading spacing. Face down closer together than face up
-            offsetY += card.faceUp ? 25 : 10;
+            offsetY += card.faceUp ? 32 : 15;
         }
         
         // Apply minimum height to container so it can be target for empty drop

@@ -213,11 +213,12 @@ select option {
     background-color: var(--card-bg);
     border-radius: var(--card-border-radius);
     box-shadow: var(--card-shadow);
+    border: 1px solid rgba(0,0,0,0.15); /* Added border for distinction when stacked */
     position: absolute;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 8px;
+    padding: 4px 6px; /* Reduced padding so content is closer to the edge */
     cursor: grab;
     user-select: none;
     transition: transform 0.2s, box-shadow 0.2s;
