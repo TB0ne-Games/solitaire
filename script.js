@@ -13,16 +13,42 @@ let foundations = [[], [], [], []]; // 0=hearts, 1=diamonds, 2=clubs, 3=spades
 let tableau = [[], [], [], [], [], [], []]; // 7 columns
 
 let moves = 0;
+let score = 0;
+let timeElapsed = 0;
+let timerInterval = null;
+let drawCount = 3;
+let gameWon = false;
+
 // Drag state (we drag an object containing the source info and the group of cards being dragged)
 let dragState = null; 
 
 const moveCountEl = document.getElementById('move-count');
+const scoreEl = document.getElementById('score');
+const timerEl = document.getElementById('timer');
+const drawCountSelect = document.getElementById('draw-count');
+const autoCompleteBtn = document.getElementById('auto-complete-btn');
+
+const modalOverlay = document.getElementById('modal-overlay');
+const modalTitle = document.getElementById('modal-title');
+const modalMessage = document.getElementById('modal-message');
+const modalStats = document.getElementById('modal-stats');
+const modalBtn = document.getElementById('modal-btn');
+
 const stockEl = document.getElementById('stock');
 const wasteEl = document.getElementById('waste');
 
 function initGame() {
     moves = 0;
+    score = 0;
+    timeElapsed = 0;
+    gameWon = false;
+    stopTimer();
+    updateScoreDisplay();
     updateMoveCount();
+    updateTimerDisplay();
+    autoCompleteBtn.classList.add('hidden');
+    modalOverlay.classList.add('hidden');
+
     deck = generateDeck();
     shuffle(deck);
     
@@ -185,7 +211,16 @@ function renderTableau() {
 
 function setupEventListeners() {
     document.getElementById('new-game-btn').addEventListener('click', initGame);
+    modalBtn.addEventListener('click', initGame);
     
+    // Draw count
+    drawCountSelect.addEventListener('change', (e) => {
+        drawCount = parseInt(e.target.value);
+    });
+
+    // Auto complete
+    autoCompleteBtn.addEventListener('click', doAutoComplete);
+
     // Stock click handler
     stockEl.addEventListener('click', handleStockClick);
 
@@ -200,15 +235,18 @@ function setupEventListeners() {
 }
 
 function handleStockClick() {
+    startTimer();
     if (stock.length === 0) {
         if (waste.length === 0) return; // both empty
         // Recycle waste to stock
         stock = waste.reverse();
         stock.forEach(c => c.faceUp = false);
         waste = [];
+        // Penalty for recycling (not standard everywhere, but common)
+        updateScore(-20);
     } else {
-        // Draw up to 3 cards
-        for (let i = 0; i < 3 && stock.length > 0; i++) {
+        // Draw up to drawCount cards
+        for (let i = 0; i < drawCount && stock.length > 0; i++) {
             const card = stock.pop();
             card.faceUp = true;
             waste.push(card);
@@ -217,6 +255,7 @@ function handleStockClick() {
     incrementMoves();
     renderStock();
     renderWaste();
+    checkGameState();
 }
 
 function handleDoubleClick(card, sourceInfo) {
@@ -229,11 +268,15 @@ function handleDoubleClick(card, sourceInfo) {
     // Try finding valid foundation
     let targetFIndex = getValidFoundationIndex(card);
     if (targetFIndex !== -1) {
+        // Scoring
+        if (sourceInfo.type === 'waste') updateScore(10);
+        else if (sourceInfo.type === 'tableau') updateScore(10);
+
         moveCards(sourceInfo, { type: 'foundation', col: targetFIndex }, sourceArray.length - 1);
         incrementMoves();
         flipTopTableauCard(sourceInfo);
         renderBoard();
-        checkWin();
+        checkGameState();
     }
 }
 
@@ -332,11 +375,17 @@ function setupDropZone(element, type, col) {
         }
 
         if (valid) {
+            // Scoring
+            if (dragState.sourceInfo.type === 'waste' && type === 'tableau') updateScore(5);
+            else if (dragState.sourceInfo.type === 'waste' && type === 'foundation') updateScore(10);
+            else if (dragState.sourceInfo.type === 'tableau' && type === 'foundation') updateScore(10);
+            else if (dragState.sourceInfo.type === 'foundation' && type === 'tableau') updateScore(-15);
+
             moveCards(dragState.sourceInfo, { type: type, col: col }, dragState.index);
             incrementMoves();
             flipTopTableauCard(dragState.sourceInfo);
             renderBoard();
-            checkWin();
+            checkGameState();
         }
         
         dragState = null;
@@ -407,6 +456,7 @@ function flipTopTableauCard(sourceInfo) {
             const topCard = sourceArray[sourceArray.length - 1];
             if (!topCard.faceUp) {
                 topCard.faceUp = true;
+                updateScore(5);
             }
         }
     }
@@ -422,12 +472,147 @@ function getValidFoundationIndex(card) {
 }
 
 function incrementMoves() {
+    startTimer();
     moves++;
     updateMoveCount();
 }
 
 function updateMoveCount() {
     moveCountEl.innerText = moves;
+}
+
+function updateScore(points) {
+    score += points;
+    if (score < 0) score = 0;
+    updateScoreDisplay();
+}
+
+function updateScoreDisplay() {
+    scoreEl.innerText = score;
+}
+
+// ------ TIMER ------
+
+function startTimer() {
+    if (!timerInterval && !gameWon) {
+        timerInterval = setInterval(() => {
+            timeElapsed++;
+            updateTimerDisplay();
+        }, 1000);
+    }
+}
+
+function stopTimer() {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+}
+
+function updateTimerDisplay() {
+    const min = Math.floor(timeElapsed / 60).toString().padStart(2, '0');
+    const sec = (timeElapsed % 60).toString().padStart(2, '0');
+    timerEl.innerText = `${min}:${sec}`;
+}
+
+// ------ ENDGAME / AUTO-COMPLETE ------
+
+function checkGameState() {
+    if (checkWin()) return;
+    
+    // Check if eligible for auto-complete
+    if (isEligibleForAutoComplete()) {
+        autoCompleteBtn.classList.remove('hidden');
+    } else {
+        autoCompleteBtn.classList.add('hidden');
+    }
+
+    // Optional: detect if no more moves (omitted complex check for performance, can add simple check if desired)
+    if (!hasAnyValidMoves()) {
+        showGameOver(false);
+    }
+}
+
+function isEligibleForAutoComplete() {
+    // True if stock is empty, waste is empty, and all tableau cards are face up
+    if (stock.length > 0 || waste.length > 0) return false;
+    for (let i = 0; i < 7; i++) {
+        for (let j = 0; j < tableau[i].length; j++) {
+            if (!tableau[i][j].faceUp) return false;
+        }
+    }
+    return true;
+}
+
+function doAutoComplete() {
+    if (!isEligibleForAutoComplete() || gameWon) return;
+    
+    let moved = true;
+    const interval = setInterval(() => {
+        moved = false;
+        // Try top card of each tableau
+        for (let i = 0; i < 7; i++) {
+            if (tableau[i].length > 0) {
+                const topCard = tableau[i][tableau[i].length - 1];
+                let fIndex = getValidFoundationIndex(topCard);
+                if (fIndex !== -1) {
+                    moveCards({type: 'tableau', col: i}, {type: 'foundation', col: fIndex}, tableau[i].length - 1);
+                    updateScore(10);
+                    moved = true;
+                    renderBoard();
+                    break; // one card per interval
+                }
+            }
+        }
+        
+        if (checkWin()) {
+            clearInterval(interval);
+        } else if (!moved) {
+            clearInterval(interval); // fallback
+        }
+    }, 100);
+}
+
+function hasAnyValidMoves() {
+    // A simplified check. Only truly "no moves" if all logic exhausted.
+    // Full game over detection in Solitaire is complex; here we do a basic check.
+    
+    // If stock not empty, you have a move (draw).
+    if (stock.length > 0) return true;
+    
+    // Check waste top
+    if (waste.length > 0) {
+        const wasteCard = waste[waste.length - 1];
+        if (getValidFoundationIndex(wasteCard) !== -1) return true;
+        for (let i = 0; i < 7; i++) {
+            if (isValidTableauMove([wasteCard], i)) return true;
+        }
+    }
+
+    // Check tableau tops and face-up segments
+    for (let i = 0; i < 7; i++) {
+        if (tableau[i].length > 0) {
+            // Check top card for foundation
+            const topCard = tableau[i][tableau[i].length - 1];
+            if (getValidFoundationIndex(topCard) !== -1) return true;
+
+            // Check any face-up sub-stack to move to another tableau
+            for (let j = 0; j < tableau[i].length; j++) {
+                if (tableau[i][j].faceUp) {
+                    const stack = tableau[i].slice(j);
+                    for (let t = 0; t < 7; t++) {
+                        if (i !== t && isValidTableauMove(stack, t)) {
+                            // Valid move to other tableau. Is it useful?
+                            // Moving King to empty is always a move. Moving a stack is a move.
+                            // To prevent infinite loop logic, just count as move for now.
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return false;
 }
 
 function checkWin() {
@@ -439,10 +624,28 @@ function checkWin() {
         }
     }
     if (win) {
-        setTimeout(() => {
-            alert(`You won in ${moves} moves!`);
-        }, 500);
+        gameWon = true;
+        stopTimer();
+        autoCompleteBtn.classList.add('hidden');
+        showGameOver(true);
+        return true;
     }
+    return false;
+}
+
+function showGameOver(isWin) {
+    modalTitle.innerText = isWin ? "You Won!" : "Game Over";
+    modalMessage.innerText = isWin ? "Congratulations on completing the game!" : "There are no more valid moves available.";
+    modalTitle.style.color = isWin ? "var(--accent)" : "#e63946";
+    
+    modalStats.innerHTML = `
+        <div>Time: ${timerEl.innerText}</div>
+        <div>Moves: ${moves}</div>
+        <div>Score: ${score}</div>
+    `;
+    
+    modalBtn.innerText = "Play Again";
+    modalOverlay.classList.remove('hidden');
 }
 
 // Start immediately on load

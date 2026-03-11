@@ -12,8 +12,18 @@
         <header>
             <h1>Solitaire</h1>
             <div class="controls">
+                <div class="settings">
+                    <label for="draw-count">Draw:</label>
+                    <select id="draw-count">
+                        <option value="1">1</option>
+                        <option value="3" selected>3</option>
+                    </select>
+                </div>
+                <div class="stats-box">Time: <span id="timer">00:00</span></div>
+                <div class="stats-box">Score: <span id="score">0</span></div>
+                <div class="stats-box">Moves: <span id="move-count">0</span></div>
                 <button id="new-game-btn">New Game</button>
-                <div class="score-box">Moves: <span id="move-count">0</span></div>
+                <button id="auto-complete-btn" class="hidden">Auto-Finish</button>
             </div>
         </header>
 
@@ -42,6 +52,16 @@
                 <div id="tableau-5" class="tableau-pile"></div>
                 <div id="tableau-6" class="tableau-pile"></div>
             </div>
+        </div>
+    </div>
+    
+    <!-- Modals -->
+    <div id="modal-overlay" class="hidden">
+        <div class="modal">
+            <h2 id="modal-title">Game Over</h2>
+            <p id="modal-message">No more valid moves available.</p>
+            <div class="modal-stats" id="modal-stats"></div>
+            <button id="modal-btn">Try Again</button>
         </div>
     </div>
     
